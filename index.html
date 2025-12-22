@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jeddah Tower: Construction Sim</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+          --nums-height: 80px;
+          --nums-width: 55px;
+          --nums-font-size: 55px;
+        }
+
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Inter', 'Tajawal', sans-serif; touch-action: none; }
+        canvas { display: block; }
+
+        .glass-panel {
+          background: rgba(0, 0, 0, 0.45);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* Flip Counter Styles - Robust Alignment */
+        .flip-container {
+          display: flex;
+          gap: 6px;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .nums {
+          box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+          display: inline-block;
+          height: var(--nums-height);
+          width: var(--nums-width);
+          perspective: 1000px;
+          position: relative;
+          background: #111;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @media (max-width: 768px) {
+          :root {
+            --nums-height: 60px;
+            --nums-width: 40px;
+            --nums-font-size: 38px;
+          }
+          .nums { border-radius: 8px; }
+        }
+
+        .nums:after {
+          content: "";
+          height: 1.5px;
+          left: 0;
+          position: absolute;
+          top: 50%;
+          width: 100%;
+          background: rgba(0,0,0,0.8);
+          box-shadow: 0 0 4px rgba(0,0,0,1);
+          z-index: 10;
+        }
+
+        .num-half {
+          position: absolute;
+          width: 100%;
+          height: 50%;
+          left: 0;
+          overflow: hidden;
+          text-align: center;
+          background: #1a1a1a;
+          color: #fff;
+          font-size: var(--nums-font-size);
+          font-weight: 900;
+          font-family: 'Inter', sans-serif;
+          user-select: none;
+        }
+
+        .num-top {
+          top: 0;
+          line-height: var(--nums-height);
+          background: linear-gradient(to bottom, #222, #1a1a1a);
+          border-bottom: 0.5px solid rgba(0,0,0,0.5);
+        }
+
+        .num-bottom {
+          bottom: 0;
+          line-height: 0;
+          background: linear-gradient(to bottom, #1a1a1a, #111);
+          border-top: 0.5px solid rgba(255,255,255,0.05);
+        }
+
+        .countdown-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .font-bold-all * { font-weight: 700 !important; }
+        .font-black-all * { font-weight: 900 !important; }
+
+        .overflow-y-auto::-webkit-scrollbar { display: none; }
+        .overflow-y-auto { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "three": "https://esm.sh/three@^0.182.0",
+    "@react-three/drei": "https://esm.sh/@react-three/drei@^10.7.7",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@^9.4.2"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
