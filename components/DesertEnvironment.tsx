@@ -1,10 +1,9 @@
-
 // Fix for React Three Fiber intrinsic elements typing
 import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
-const DesertEnvironment: React.FC = () => {
+const DesertEnvironment: React.FC<{}> = () => { // Changed to React.FC<{}> as it has no props
   const waterRef = useRef<THREE.Mesh>(null);
 
   // Animate water surface slightly

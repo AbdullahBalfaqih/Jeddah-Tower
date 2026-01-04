@@ -1,10 +1,36 @@
-
 import React, { useState, Suspense, useEffect, useMemo, useRef } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sky, Environment, ContactShadows, Loader } from '@react-three/drei';
+import { Canvas, useThree, useFrame, extend, ThreeElements } from '@react-three/fiber';
+import { OrbitControls, Sky, Environment, ContactShadows, Loader, Lightformer } from '@react-three/drei';
 import Scene from './components/Scene';
 import UIOverlay from './components/UIOverlay';
-import * as THREE from 'three';
+import * as THREE from 'three'; 
+
+// Fix: Augment the global JSX namespace to include React Three Fiber elements.
+// This resolves "Property '...' does not exist on type 'JSX.IntrinsicElements'" errors.
+declare global {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
+// Fix: Explicitly extend Three.js objects to be recognized as JSX intrinsic elements by React Three Fiber.
+// This resolves TypeScript errors where JSX elements like `<mesh>`, `<group>`, `<boxGeometry>`, etc.,
+// are not found in `JSX.IntrinsicElements`. This should be done once at the root of the R3F application.
+extend({
+  Color: THREE.Color,
+  Fog: THREE.Fog,
+  AmbientLight: THREE.AmbientLight,
+  DirectionalLight: THREE.DirectionalLight,
+  Group: THREE.Group,
+  Mesh: THREE.Mesh,
+  BoxGeometry: THREE.BoxGeometry,
+  CylinderGeometry: THREE.CylinderGeometry,
+  PlaneGeometry: THREE.PlaneGeometry,
+  SphereGeometry: THREE.SphereGeometry,
+  TorusGeometry: THREE.TorusGeometry,
+  MeshStandardMaterial: THREE.MeshStandardMaterial,
+  MeshPhysicalMaterial: THREE.MeshPhysicalMaterial,
+});
 
 const CameraController = ({ preset, currentFloors }: { preset: string; currentFloors: number }) => {
   const { camera, controls } = useThree() as any;
@@ -63,11 +89,17 @@ const CameraController = ({ preset, currentFloors }: { preset: string; currentFl
 };
 
 const App: React.FC = () => {
-  const [floorCount, setFloorCount] = useState(81);
+  const [floorCount, setFloorCount] = useState(84); // Start at floor 84
+  const [isFinished, setIsFinished] = useState(false); // State for the final architectural look
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
   const [cameraPreset, setCameraPreset] = useState('overview');
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [isNight, setIsNight] = useState(false);
+
+  // Effect to update the body's background color
+  useEffect(() => {
+    document.body.style.backgroundColor = isNight ? '#020617' : '#d8c8ae';
+  }, [isNight]);
 
   const skyProps = useMemo(() => {
     return isNight 
@@ -90,10 +122,16 @@ const App: React.FC = () => {
         <Suspense fallback={null}>
           <color attach="background" args={[isNight ? '#020617' : '#d8c8ae']} />
           <Sky {...skyProps} distance={450000} />
-          
           <fog attach="fog" args={[isNight ? '#020617' : '#d8c8ae', 1000, 60000]} />
           
-          <Environment preset={isNight ? "night" : "city"} />
+          <Environment resolution={512} preset={null as any} background={false}>
+            <group rotation={[-Math.PI / 3, 0, 1]}>
+              <Lightformer intensity={isNight ? 0.5 : 4} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
+              <Lightformer intensity={isNight ? 0.5 : 2} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={[20, 0.1, 1]} />
+              <Lightformer intensity={isNight ? 0.5 : 2} rotation-y={Math.PI / 2} position={[-5, -1, -1]} scale={[20, 0.5, 1]} />
+              <Lightformer intensity={isNight ? 0.5 : 2} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={[20, 1, 1]} />
+            </group>
+          </Environment>
           
           <ambientLight intensity={isNight ? 0.3 : 0.8} />
           <directionalLight
@@ -108,7 +146,7 @@ const App: React.FC = () => {
             shadow-bias={-0.0001}
           />
 
-          <Scene floorCount={floorCount} />
+          <Scene floorCount={floorCount} isFinished={isFinished} />
           
           <CameraController preset={cameraPreset} currentFloors={floorCount} />
           
@@ -136,6 +174,8 @@ const App: React.FC = () => {
         setLanguage={setLanguage}
         isNight={isNight}
         setIsNight={setIsNight}
+        isFinished={isFinished}
+        setIsFinished={setIsFinished}
       />
       
       <Loader />

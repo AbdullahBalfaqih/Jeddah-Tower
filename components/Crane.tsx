@@ -1,4 +1,3 @@
-
 // Fix for React Three Fiber intrinsic elements typing
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -13,7 +12,7 @@ interface CraneProps {
   showFlag?: boolean;
 }
 
-const Flag: React.FC<{ height: number }> = ({ height }) => {
+export const Flag: React.FC<{ height: number }> = ({ height }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
   const texture = useMemo(() => {
@@ -105,6 +104,7 @@ const Crane: React.FC<CraneProps> = ({ position, rotation, color, height = 30, t
     if (jibRef.current) {
       jibRef.current.rotation.y = Math.sin(t * 0.12 + position[0]) * 1.5;
     }
+    // Fix: Add null checks for luffingJibRef.current before accessing properties
     if (luffingJibRef.current) {
       luffingJibRef.current.rotation.y = Math.sin(t * 0.1 + position[0]) * 1.2;
       // Luffing action (arm going up and down)

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import FlipCard from './FlipCard';
 
 interface UIOverlayProps {
@@ -12,19 +12,43 @@ interface UIOverlayProps {
   setLanguage: (lang: 'ar' | 'en') => void;
   isNight: boolean;
   setIsNight: (val: boolean) => void;
+  isFinished: boolean;
+  setIsFinished: (val: boolean) => void;
 }
 
 const UIOverlay: React.FC<UIOverlayProps> = ({ 
   floorCount, setFloorCount, isAutoBuilding, setIsAutoBuilding,
-  setCameraPreset, cameraPreset, language, setLanguage, isNight, setIsNight
+  setCameraPreset, cameraPreset, language, setLanguage, isNight, setIsNight,
+  isFinished, setIsFinished
 }) => {
   const TARGET_FLOORS = 167;
-  const TARGET_HEIGHT_M = 1000;
-  const PODIUM_HEIGHT = 20;
-  const FLOOR_HEIGHT = (TARGET_HEIGHT_M - PODIUM_HEIGHT) / TARGET_FLOORS;
+  // ~4.02m per floor based on 338m @ 84 floors. 167 floors = ~672m. Spire adds ~328m.
+  const METERS_PER_FLOOR = 4.0238; 
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [showUI, setShowUI] = useState(true);
+  const [displayedHeight, setDisplayedHeight] = useState(0);
+
+  // Smoothly update displayed height based on construction status
+  useEffect(() => {
+    let animationFrameId: number;
+    let targetHeight = isFinished ? 1000.0 : floorCount * METERS_PER_FLOOR;
+    
+    const animate = () => {
+      setDisplayedHeight(prev => {
+        const diff = targetHeight - prev;
+        // If finished, animate faster to represent spire deploying
+        const speed = isFinished ? diff * 0.05 : diff * 0.1;
+        
+        if (Math.abs(diff) < 0.1) return targetHeight;
+        return prev + speed;
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animate();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [floorCount, isFinished]);
 
   const translations = useMemo(() => ({
     ar: {
@@ -37,6 +61,8 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
       addFloor: "بناء طابق إضافي",
       autoBuild: "بناء مستمر",
       stopAuto: "إيقاف التلقائي",
+      finish: "تشطيب البرج بالكامل",
+      completed: "مكتمل",
       viewMode: "وضع العرض",
       overview: "البرج كاملاً",
       construction: "منطقة البناء",
@@ -62,6 +88,8 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
       addFloor: "ADD FLOOR",
       autoBuild: "START AUTO",
       stopAuto: "STOP AUTO",
+      finish: "FULL TOWER FINISH",
+      completed: "COMPLETED • 1000M",
       viewMode: "VIEW MODE",
       overview: "Full Tower",
       construction: "Construction Zone",
@@ -80,6 +108,12 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
   }), []);
 
   const t = translations[language];
+
+  const handleFinish = () => {
+    setFloorCount(TARGET_FLOORS);
+    setIsAutoBuilding(false);
+    setIsFinished(true);
+  };
 
   const handleAddToCalendar = () => {
     const event = {
@@ -117,14 +151,13 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  const heightM = (PODIUM_HEIGHT + (floorCount * FLOOR_HEIGHT)).toFixed(1);
-  const progress = ((floorCount / TARGET_FLOORS) * 100).toFixed(1);
+  const progress = isFinished ? 100 : ((floorCount / TARGET_FLOORS) * 100).toFixed(1);
   const floorStr = floorCount.toString().padStart(3, '0');
 
   return (
     <div className="absolute top-0 left-0 w-full h-full pointer-events-none text-white font-bold p-3 md:p-10 flex flex-col justify-between overflow-x-hidden">
       
-      {/* PERSISTENT UI TOGGLE (Always Visible) */}
+      {/* PERSISTENT UI TOGGLE */}
       <div className="absolute top-3 right-3 md:top-10 md:right-10 pointer-events-auto z-50 flex flex-col gap-2 items-end">
         <button 
           onClick={() => setShowUI(!showUI)}
@@ -146,7 +179,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
         </button>
       </div>
 
-      {/* HEADER: Branding & Settings */}
+      {/* HEADER */}
       <div className={`flex flex-col md:flex-row justify-between items-center md:items-start w-full gap-4 transition-all duration-700 transform ${showUI ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'}`}>
         <div className="pointer-events-auto w-full md:w-auto">
           <div className="glass-panel px-4 md:px-6 py-2.5 md:py-4 rounded-2xl md:rounded-3xl border-white/20 flex items-center justify-between md:justify-start gap-4 md:gap-6 shadow-2xl">
@@ -162,13 +195,12 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
         </div>
       </div>
 
-      {/* BOTTOM SECTION - Responsive Column on Mobile */}
+      {/* BOTTOM SECTION */}
       <div className={`flex flex-col md:flex-row justify-between items-center md:items-end w-full gap-3 md:gap-8 mt-4 md:mt-0 transition-all duration-700 transform ${showUI ? 'translate-y-0 opacity-100' : 'translate-y-[200%] opacity-0'}`}>
         
-        {/* BOTTOM LEFT: FLOOR STATS & CONSTRUCTION */}
+        {/* LEFT PANEL */}
         <div className="flex flex-col gap-3 md:gap-6 pointer-events-auto w-full md:w-[340px]" style={{ direction: 'ltr' }}>
           
-          {/* Floor Info Panel */}
           <div className="glass-panel p-4 md:p-8 rounded-[25px] md:rounded-[40px] border-white/20 shadow-2xl flex flex-col items-center">
             <p className="text-[8px] md:text-[10px] font-black text-yellow-500 uppercase mb-2 md:mb-4 tracking-[0.2em] md:tracking-[0.3em]">{t.currentFloor}</p>
             <div className="flip-container mb-3 md:mb-6">
@@ -178,7 +210,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
             <div className="grid grid-cols-2 gap-4 md:gap-8 w-full mt-2">
               <div className="text-center border-r border-white/10 pr-2">
                 <p className="text-[7px] md:text-[9px] uppercase opacity-40 mb-1 tracking-widest">{t.height}</p>
-                <p className="text-base md:text-xl font-black text-white">{heightM}<span className="text-[10px] ml-1 opacity-50">M</span></p>
+                <p className="text-base md:text-xl font-black text-white">{displayedHeight.toFixed(1)}<span className="text-[10px] ml-1 opacity-50">M</span></p>
               </div>
               <div className="text-center pl-2">
                 <p className="text-[7px] md:text-[9px] uppercase opacity-40 mb-1 tracking-widest">{t.progress}</p>
@@ -187,27 +219,46 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
             </div>
           </div>
 
-          {/* Construction Panel */}
           <div className="glass-panel p-3 md:p-6 rounded-[20px] md:rounded-[35px] border-white/20 shadow-2xl flex flex-col gap-2 md:gap-4">
             <h2 className="text-yellow-500 font-black text-[7px] md:text-[9px] tracking-[0.2em] md:tracking-[0.3em] uppercase mb-0.5 border-b border-white/10 pb-1.5 md:pb-3 text-center opacity-70">{t.constructionControl}</h2>
-            <div className="flex gap-2 md:gap-4">
-              <button 
-                onClick={() => setFloorCount(p => Math.min(TARGET_FLOORS, p + 1))}
-                className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-black py-2.5 md:py-4 rounded-xl md:rounded-2xl transition-all active:scale-95 text-[9px] md:text-[11px] uppercase"
-              >
-                {t.addFloor}
-              </button>
-              <button 
-                onClick={() => setIsAutoBuilding(!isAutoBuilding)}
-                className={`flex-1 py-2.5 md:py-4 rounded-xl md:rounded-2xl font-black transition-all active:scale-95 border-2 text-[9px] md:text-[11px] uppercase ${isAutoBuilding ? 'bg-red-500/80 border-red-500 text-white shadow-lg' : 'bg-white/5 border-white/20 text-white hover:bg-white/10'}`}
-              >
-                {isAutoBuilding ? t.stopAuto : t.autoBuild}
-              </button>
+            
+            <div className="flex flex-col gap-2 md:gap-3">
+              {/* Construction Buttons */}
+              <div className="flex gap-2 md:gap-4">
+                <button 
+                  disabled={isFinished}
+                  onClick={() => setFloorCount(p => Math.min(TARGET_FLOORS, p + 1))}
+                  className={`flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-black py-2 md:py-3 rounded-xl transition-all active:scale-95 text-[9px] md:text-[11px] uppercase ${isFinished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {t.addFloor}
+                </button>
+                <button 
+                  disabled={isFinished}
+                  onClick={() => setIsAutoBuilding(!isAutoBuilding)}
+                  className={`flex-1 py-2 md:py-3 rounded-xl font-black transition-all active:scale-95 border-2 text-[9px] md:text-[11px] uppercase ${isAutoBuilding ? 'bg-red-500/80 border-red-500 text-white shadow-lg' : 'bg-white/5 border-white/20 text-white hover:bg-white/10'} ${isFinished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isAutoBuilding ? t.stopAuto : t.autoBuild}
+                </button>
+              </div>
+
+              {/* Finish Button - ALWAYS VISIBLE if not finished */}
+              {!isFinished ? (
+                <button 
+                  onClick={handleFinish}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-2.5 md:py-3.5 rounded-xl transition-all active:scale-95 text-[10px] md:text-xs uppercase shadow-lg border border-blue-400/30 flex items-center justify-center gap-2"
+                >
+                  {t.finish}
+                </button>
+              ) : (
+                <div className="w-full text-center py-2.5 md:py-3.5 text-white/70 text-[9px] md:text-[11px] font-bold uppercase tracking-widest border border-white/10 rounded-xl bg-green-500/10 shadow-inner">
+                  {t.completed}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* BOTTOM CENTER: COUNTDOWN */}
+        {/* CENTER PANEL */}
         <div className="w-full md:flex-1 flex flex-col items-center px-0 md:px-6">
           <div className="glass-panel px-4 md:px-12 py-4 md:py-8 rounded-[25px] md:rounded-[50px] border-white/10 shadow-2xl w-full max-w-2xl flex flex-col items-center relative overflow-hidden group pointer-events-auto">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
@@ -240,7 +291,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
           </div>
         </div>
 
-        {/* BOTTOM RIGHT: VIEW MODES */}
+        {/* RIGHT PANEL */}
         <div className="pointer-events-auto w-full md:w-[280px]">
           <div className="glass-panel p-3 md:p-6 rounded-[25px] md:rounded-[40px] border-white/20 shadow-2xl flex flex-col gap-1.5 md:gap-3">
             <p className="text-[7px] md:text-[10px] font-black text-white/30 uppercase text-center tracking-[0.2em] md:tracking-[0.3em] mb-0.5 md:mb-2">{t.viewMode}</p>
