@@ -1,15 +1,43 @@
 import React, { useState, Suspense, useEffect, useMemo, useRef } from 'react';
-import { Canvas, useThree, useFrame, extend, ThreeElements } from '@react-three/fiber';
+import { Canvas, useThree, useFrame, extend } from '@react-three/fiber';
 import { OrbitControls, Sky, Environment, ContactShadows, Loader, Lightformer } from '@react-three/drei';
 import Scene from './components/Scene';
 import UIOverlay from './components/UIOverlay';
 import * as THREE from 'three'; 
 
 // Fix: Augment the global JSX namespace to include React Three Fiber elements.
-// This resolves "Property '...' does not exist on type 'JSX.IntrinsicElements'" errors.
+// We manually define the interface to ensure it merges with React's IntrinsicElements
+// instead of overwriting it (which caused 'div' not to exist).
 declare global {
   namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
+    interface IntrinsicElements {
+      ambientLight: any;
+      pointLight: any;
+      directionalLight: any;
+      spotLight: any;
+      hemisphereLight: any;
+      
+      mesh: any;
+      group: any;
+      primitive: any;
+      
+      // Geometries
+      boxGeometry: any;
+      cylinderGeometry: any;
+      planeGeometry: any;
+      sphereGeometry: any;
+      torusGeometry: any;
+      circleGeometry: any;
+      
+      // Materials
+      meshStandardMaterial: any;
+      meshPhysicalMaterial: any;
+      meshBasicMaterial: any;
+      
+      // Others
+      color: any;
+      fog: any;
+    }
   }
 }
 
@@ -30,6 +58,7 @@ extend({
   TorusGeometry: THREE.TorusGeometry,
   MeshStandardMaterial: THREE.MeshStandardMaterial,
   MeshPhysicalMaterial: THREE.MeshPhysicalMaterial,
+  MeshBasicMaterial: THREE.MeshBasicMaterial,
 });
 
 const CameraController = ({ preset, currentFloors }: { preset: string; currentFloors: number }) => {
@@ -89,7 +118,7 @@ const CameraController = ({ preset, currentFloors }: { preset: string; currentFl
 };
 
 const App: React.FC = () => {
-  const [floorCount, setFloorCount] = useState(84); // Start at floor 84
+  const [floorCount, setFloorCount] = useState(85); // Start at floor 85
   const [isFinished, setIsFinished] = useState(false); // State for the final architectural look
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
   const [cameraPreset, setCameraPreset] = useState('overview');
