@@ -5,42 +5,6 @@ import Scene from './components/Scene';
 import UIOverlay from './components/UIOverlay';
 import * as THREE from 'three'; 
 
-// Fix: Augment the global JSX namespace to include React Three Fiber elements.
-// We manually define the interface to ensure it merges with React's IntrinsicElements
-// instead of overwriting it (which caused 'div' not to exist).
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      ambientLight: any;
-      pointLight: any;
-      directionalLight: any;
-      spotLight: any;
-      hemisphereLight: any;
-      
-      mesh: any;
-      group: any;
-      primitive: any;
-      
-      // Geometries
-      boxGeometry: any;
-      cylinderGeometry: any;
-      planeGeometry: any;
-      sphereGeometry: any;
-      torusGeometry: any;
-      circleGeometry: any;
-      
-      // Materials
-      meshStandardMaterial: any;
-      meshPhysicalMaterial: any;
-      meshBasicMaterial: any;
-      
-      // Others
-      color: any;
-      fog: any;
-    }
-  }
-}
-
 // Fix: Explicitly extend Three.js objects to be recognized as JSX intrinsic elements by React Three Fiber.
 // This resolves TypeScript errors where JSX elements like `<mesh>`, `<group>`, `<boxGeometry>`, etc.,
 // are not found in `JSX.IntrinsicElements`. This should be done once at the root of the R3F application.
@@ -118,7 +82,7 @@ const CameraController = ({ preset, currentFloors }: { preset: string; currentFl
 };
 
 const App: React.FC = () => {
-  const [floorCount, setFloorCount] = useState(85); // Start at floor 85
+  const [floorCount, setFloorCount] = useState(87); // Start at floor 87
   const [isFinished, setIsFinished] = useState(false); // State for the final architectural look
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
   const [cameraPreset, setCameraPreset] = useState('overview');
