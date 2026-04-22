@@ -82,7 +82,7 @@ const CameraController = ({ preset, currentFloors }: { preset: string; currentFl
 };
 
 const App: React.FC = () => {
-  const [floorCount, setFloorCount] = useState(87); // Start at floor 87
+  const [floorCount, setFloorCount] = useState(100); // Start at floor 100
   const [isFinished, setIsFinished] = useState(false); // State for the final architectural look
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
   const [cameraPreset, setCameraPreset] = useState('overview');
